@@ -38,7 +38,8 @@ type AppProvider interface {
 	App(ctx context.Context, appID int) (models.App, error)
 }
 
-func New(log *slog.Logger,
+func New(
+	log *slog.Logger,
 	userSaver UserSaver,
 	userProvider UserProvider,
 	appProvider AppProvider,
@@ -123,12 +124,13 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email string, password strin
 	if err != nil {
 		if errors.Is(err, pkg.ErrUserExists) {
 			log.Warn("user already exists")
-			return 0, fmt.Errorf("%s: %w", op, err)
+			return 0, fmt.Errorf("%s: %w", op, pkg.ErrUserExists)
 		}
-
 		log.Error("failed to save user")
+		/* fmt.Println(err) */
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
+
 	log.Info("user registered")
 
 	return id, nil

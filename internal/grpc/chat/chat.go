@@ -1,28 +1,26 @@
 package chat
 
 import (
+	"chat_service/internal/chat"
+	"chat_service/internal/kafka"
 	"context"
+	"encoding/json"
 	"fmt"
 
 	protos "github.com/Vanqazzz/protos/gen/go/chat_service/chat"
+	segmentioKafka "github.com/segmentio/kafka-go"
 	"google.golang.org/grpc"
 )
 
-type Chat interface {
-	Message(
-		chat_id string,
-		sender_id string,
-		content string,
-	) (status string, err error)
-}
-
 type serverAPI struct {
 	protos.UnimplementedChatServiceServer
-	chat Chat
+	chat chat.Chat
+
+	consumer *kafka.KafkaConsumer
 }
 
-func Register(gRPC *grpc.Server, chat Chat) {
-	protos.RegisterChatServiceServer(gRPC, &serverAPI{chat: chat})
+func Register(gRPC *grpc.Server, chat chat.Chat, consumer *kafka.KafkaConsumer) {
+	protos.RegisterChatServiceServer(gRPC, &serverAPI{chat: chat, consumer: consumer})
 }
 
 func (s *serverAPI) SendMessage(ctx context.Context, req *protos.MessageRequest) (*protos.MessageResponse, error) {
@@ -38,6 +36,36 @@ func (s *serverAPI) SendMessage(ctx context.Context, req *protos.MessageRequest)
 
 }
 
-/* func (s *serverAPI) ReceiveMessage(req *protos.UserStreamRequest, stream protos.ChatService_ReceiveMessagesServer) error {
+func (s *serverAPI) ReceiveMessages(req *protos.UserStreamRequest, stream protos.ChatService_ReceiveMessagesServer) error {
+	ctx := stream.Context()
 
-} */
+	msgChan := make(chan segmentioKafka.Message)
+
+	go s.consumer.ReadMessages(ctx, msgChan)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case msg, ok := <-msgChan:
+			if !ok {
+				return nil
+			}
+			var parsed kafka.MessagePayLoad
+			err := json.Unmarshal(msg.Value, &parsed)
+			if err != nil {
+				continue
+			}
+
+			if err := stream.Send(&protos.Message{
+				ChatId:   parsed.ChatID,
+				SenderId: parsed.SenderID,
+				Content:  parsed.Content,
+			}); err != nil {
+				return err
+			}
+
+		}
+	}
+
+}

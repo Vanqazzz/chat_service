@@ -30,7 +30,7 @@ func New(StoragePath string) (*Storage, error) {
 func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
 	const op = "storage.postgres.SaveUser"
 
-	stmt, err := s.db.Prepare("INSERT INTO users (email,pass_hash) VALUES (?,?)")
+	/* stmt, err := s.db.Prepare("INSERT INTO users (email,pass_hash) VALUES ($1, $2)")
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w ", op, err)
 	}
@@ -44,6 +44,11 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (
 	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w ", op, err)
+	} */
+	var id int64
+	err := s.db.QueryRowContext(ctx, "INSERT INTO users (email, pass_hash) VALUES ($1, $2) RETURNING id", email, passHash).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return id, nil

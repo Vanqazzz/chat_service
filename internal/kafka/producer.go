@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -41,4 +42,21 @@ func (p *KafkaProducer) SendMessage(ctx context.Context, key string, value []byt
 
 func (p *ChatImpl) Message(chatID, senderID, content string) (string, error) {
 
+	msg := map[string]string{
+		"chat_id":   chatID,
+		"sender_id": senderID,
+		"content":   content,
+	}
+
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+
+	err = p.producer.SendMessage(context.Background(), chatID, data)
+	if err != nil {
+		return "", err
+	}
+
+	return "ok", nil
 }

@@ -5,9 +5,13 @@ import (
 	"log/slog"
 	"net"
 
+	"chat_service/internal/chat"
 	authgrpc "chat_service/internal/grpc/auth"
+	chatgrpc "chat_service/internal/grpc/chat"
+	"chat_service/internal/kafka"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type App struct {
@@ -25,11 +29,14 @@ func (a *App) MustRun() {
 
 }
 
-func New(log *slog.Logger, authService authgrpc.Auth, port int) *App {
+func New(log *slog.Logger, authService authgrpc.Auth, chat chat.Chat, counsumer *kafka.KafkaConsumer, port int) *App {
 	gRPCServer := grpc.NewServer()
 
 	authgrpc.Register(gRPCServer, authService)
 
+	chatgrpc.Register(gRPCServer, chat, counsumer)
+
+	reflection.Register(gRPCServer)
 	return &App{
 		log:        log,
 		gRPCServer: gRPCServer,
