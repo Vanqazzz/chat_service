@@ -71,7 +71,7 @@ func (a *Auth) Login(ctx context.Context, email string, password string, appID i
 	if err != nil {
 		if errors.Is(err, pkg.ErrUserNotFound) {
 			a.log.Warn("USER NOT FOUND")
-			return "", fmt.Errorf("%s: %w", op, err)
+			return "", fmt.Errorf("%s: %w", op, pkg.ErrInvalidCredentials)
 		}
 		a.log.Error("failed to get user")
 
@@ -86,6 +86,7 @@ func (a *Auth) Login(ctx context.Context, email string, password string, appID i
 
 	app, err := a.appProvider.App(ctx, appID)
 	if err != nil {
+
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -122,12 +123,8 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email string, password strin
 
 	id, err := a.usrSaver.SaveUser(ctx, email, PassHash)
 	if err != nil {
-		if errors.Is(err, pkg.ErrUserExists) {
-			log.Warn("user already exists")
-			return 0, fmt.Errorf("%s: %w", op, pkg.ErrUserExists)
-		}
-		log.Error("failed to save user")
-		/* fmt.Println(err) */
+
+		log.Error("failed to save user", err)
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 

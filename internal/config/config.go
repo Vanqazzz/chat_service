@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ilyakaznacheev/cleanenv"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -30,7 +30,7 @@ func MustLoad() *Config {
 
 func MustLoadPath(configPath string) *Config {
 	// check if file exist
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	/* if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		panic("config file does not exist: " + configPath)
 	}
 
@@ -38,6 +38,21 @@ func MustLoadPath(configPath string) *Config {
 
 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
 		panic("cannot read config: " + err.Error())
+	}
+
+	return &cfg */
+
+	raw, err := os.ReadFile(configPath)
+	if err != nil {
+		panic("cannot read config file: " + err.Error())
+	}
+
+	// Подставляем переменные окружения
+	expanded := os.ExpandEnv(string(raw))
+
+	var cfg Config
+	if err := yaml.Unmarshal([]byte(expanded), &cfg); err != nil {
+		panic("cannot parse config: " + err.Error())
 	}
 
 	return &cfg

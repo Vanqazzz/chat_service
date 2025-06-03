@@ -3,7 +3,7 @@ package app
 import (
 	grpcapp "chat_service/internal/app/grpc"
 	"chat_service/internal/chat"
-	"chat_service/internal/kafka"
+	kf "chat_service/internal/kafka"
 	"chat_service/internal/services/auth"
 	"chat_service/internal/storage"
 	"log/slog"
@@ -24,12 +24,12 @@ func New(log *slog.Logger, grpcPort int, storagePath string, tokenTTL time.Durat
 
 	authService := auth.New(log, storage, storage, storage, tokenTTL)
 
-	brokers := []string{"localhost:9092"}
+	brokers := []string{"kafka:9092"}
 	topic := "chat-messages"
 	groupID := "chat-group"
 
-	producer := kafka.NewKafkaProducer(brokers, topic)
-	consumer := kafka.NewKafkaConsumer(brokers, topic, groupID)
+	producer := kf.NewKafkaProducer(brokers, topic)
+	consumer := kf.NewKafkaConsumer(brokers, topic, groupID)
 
 	chatService := chat.NewChatService(producer)
 	grpcApp := grpcapp.New(log, authService, chatService, consumer, grpcPort)

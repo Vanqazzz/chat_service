@@ -59,7 +59,7 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 
 	const op = "storage.postgres.User"
 
-	stmt, err := s.db.Prepare("SELECT id,email,pass_hash FROM users WHERE email = ?")
+	stmt, err := s.db.Prepare("SELECT id,email,pass_hash FROM users WHERE email = $1")
 	if err != nil {
 		return models.User{}, fmt.Errorf("%s: %w ", op, err)
 	}
@@ -83,8 +83,9 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 func (s *Storage) App(ctx context.Context, id int) (models.App, error) {
 	const op = "storage.postgres.app"
 
-	stmt, err := s.db.Prepare("SELECT id,name,secret FROM users")
+	stmt, err := s.db.Prepare("SELECT id,name,secret FROM apps WHERE id = $1")
 	if err != nil {
+
 		return models.App{}, fmt.Errorf("%s: %w ", op, err)
 	}
 

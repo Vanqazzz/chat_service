@@ -3,11 +3,17 @@ package main
 import (
 	"chat_service/internal/app"
 	"chat_service/internal/config"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 const (
@@ -16,18 +22,34 @@ const (
 	envProd  = "prod"
 )
 
-func main() {
+func Migrations() {
+	dbHost := os.Getenv("STORAGE_PATH")
+	migrationsPath := "file://./migrations"
 
-	fmt.Println("start.1.")
+	m, err := migrate.New(migrationsPath, dbHost)
+	if err != nil {
+		panic(fmt.Errorf("failed to create migrate instance: %w", err))
+	}
+
+	err = m.Up()
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		panic(fmt.Errorf("failed to apply migrations: %w", err))
+	}
+
+}
+
+func main() {
+	Migrations()
+	slog.Info("Migrations applied successfully")
 
 	cfg := config.MustLoad()
 
-	log := setupLogger(cfg.Env)
+	slog := setupLogger(cfg.Env)
 
-	log.Info("starting server")
+	slog.Info("starting server")
 
 	application := app.New(
-		log, cfg.GPRC.Port, cfg.StoragePath, cfg.TokenTTL)
+		slog, cfg.GPRC.Port, cfg.StoragePath, cfg.TokenTTL)
 
 	go application.GRPCSrv.MustRun()
 
@@ -38,7 +60,7 @@ func main() {
 	<-stop
 
 	application.GRPCSrv.Stop()
-	log.Info("server stopped")
+	slog.Info("server stopped")
 
 }
 

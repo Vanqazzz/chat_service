@@ -22,7 +22,8 @@ WORKDIR /app
 
 COPY --from=builder /app/chat_service  .
 COPY --from=builder /app/config ./config
+COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 
-CMD ["/chat_service", "--config=./config/local.yaml"]
+CMD ["./chat_service", "--config=./config/local.yaml"]
