@@ -22,12 +22,13 @@ const (
 	envProd  = "prod"
 )
 
-func Migrations() {
+func Migrations() error {
 	dbHost := os.Getenv("STORAGE_PATH")
 	migrationsPath := "file://./migrations"
 
 	m, err := migrate.New(migrationsPath, dbHost)
 	if err != nil {
+		fmt.Println(dbHost)
 		panic(fmt.Errorf("failed to create migrate instance: %w", err))
 	}
 
@@ -35,7 +36,7 @@ func Migrations() {
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		panic(fmt.Errorf("failed to apply migrations: %w", err))
 	}
-
+	return nil
 }
 
 func main() {

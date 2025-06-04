@@ -33,10 +33,7 @@ services:
       - sh
       - -c 
       - |
-        until kafka-topics --bootstrap-server kafka:9092 --list; do
-          echo "waiting"
-          sleep 3
-        done
+        until kafka-topics --bootstrap-server kafka:9092 --list
         kafka-topics --create --topic chat-messages --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:9092    
     networks:
       - my-network

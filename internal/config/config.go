@@ -25,29 +25,17 @@ func MustLoad() *Config {
 	if configPath == "" {
 		panic("config path is empty")
 	}
-	return MustLoadPath(configPath)
+
+	return MustLoadByPath(configPath)
 }
 
-func MustLoadPath(configPath string) *Config {
-	// check if file exist
-	/* if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		panic("config file does not exist: " + configPath)
-	}
-
-	var cfg Config
-
-	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
-		panic("cannot read config: " + err.Error())
-	}
-
-	return &cfg */
+func MustLoadByPath(configPath string) *Config {
 
 	raw, err := os.ReadFile(configPath)
 	if err != nil {
 		panic("cannot read config file: " + err.Error())
 	}
 
-	// Подставляем переменные окружения
 	expanded := os.ExpandEnv(string(raw))
 
 	var cfg Config
@@ -57,7 +45,6 @@ func MustLoadPath(configPath string) *Config {
 
 	return &cfg
 }
-
 func fetchConfigPath() string {
 	var res string
 
